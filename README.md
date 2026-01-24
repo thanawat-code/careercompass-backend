@@ -30,6 +30,8 @@ Before you begin, ensure you have the following installed on your system:
 - **Migrations**: [golang-migrate](https://github.com/golang-migrate/migrate) - Database migration tool
 - **Environment**: [godotenv](https://github.com/joho/godotenv) - Environment variable management
 - **CORS**: [gin-contrib/cors](https://github.com/gin-contrib/cors) - CORS middleware
+- **Authentication**: [jwt](https://github.com/golang-jwt/jwt) - JSON Web Tokens
+- **Security**: [bcrypt](https://golang.org/x/crypto/bcrypt) - Password hashing
 
 ## 📁 Project Structure
 
@@ -43,7 +45,8 @@ careercompass-backend/
 │   ├── database/                # Database connection setup
 │   ├── handlers/                # HTTP request handlers
 │   ├── models/                  # Data models
-│   └── router/                  # Route definitions
+│   ├── router/                  # Route definitions
+│   └── services/                # Business logic & Authentication
 ├── migrations/                  # Database migration files
 │   ├── 000001_create_users_table.up.sql
 │   └── 000001_create_users_table.down.sql
@@ -89,6 +92,10 @@ DB_SSLMODE=disable
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# JWT Configuration
+JWT_SECRET=your-secret-key-change-this-in-production
+JWT_EXPIRATION=24h
 ```
 
 > **Note**: Modify these values according to your environment needs.
@@ -132,6 +139,8 @@ The server will start on `http://localhost:4546`
 | `DB_NAME` | Database name | `careerdb` |
 | `DB_SSLMODE` | SSL mode for database | `disable` |
 | `CORS_ALLOWED_ORIGINS` | Allowed CORS origins | `http://localhost:3000,http://localhost:5173` |
+| `JWT_SECRET` | Secret key for JWT signing | `your-secret-key...` |
+| `JWT_EXPIRATION` | Token expiration time | `24h` |
 
 ## 🗄 Database Management
 
@@ -228,9 +237,71 @@ GET /health
 }
 ```
 
+### Auth Endpoints
+
+#### Register
+
+```http
+POST /api/auth/register
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "confirm_password": "securepassword123",
+  "display_name": "John Doe",
+  "gender": "male"
+}
+```
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "uuid-string",
+    "email": "user@example.com",
+    "display_name": "John Doe",
+    "gender": "male",
+    "created_at": "timestamp",
+    "updated_at": "timestamp"
+  },
+  "token": "jwt-token-string"
+}
+```
+
+#### Login
+
+```http
+POST /api/auth/login
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "user": { ... },
+  "token": "jwt-token-string"
+}
+```
+
 ### User Endpoints
 
-> **Note**: Add your specific API endpoints documentation here as you develop them.
+#### Get Users
+
+```http
+GET /api/users
+```
+
+**Response:** Returns a list of users.
 
 ## 🐛 Troubleshooting
 
