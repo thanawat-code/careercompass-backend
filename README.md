@@ -19,7 +19,7 @@ A Go-based REST API backend built with Gin framework and PostgreSQL database.
 Before you begin, ensure you have the following installed on your system:
 
 - **Go** (version 1.25.6 or higher) - [Download Go](https://golang.org/dl/)
-- **Docker** and **Docker Compose** - [Install Docker](https://docs.docker.com/get-docker/)
+- **Docker** and **Docker Compose** (version 29.1.5) - [Install Docker](https://docs.docker.com/get-docker/)
 - **Git** - [Install Git](https://git-scm.com/downloads)
 
 ## 🛠 Tech Stack
