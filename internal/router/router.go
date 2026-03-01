@@ -35,6 +35,12 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 		// User routes
 		api.GET("/users", handlers.GetUsers(db))
 		api.POST("/users", handlers.CreateUser(db))
+
+		// Learning Path routes
+		api.GET("/learning-paths", handlers.GetAllLearningPaths(db))
+		api.GET("/learning-path/:career_name", handlers.GetLearningPath(db))
+		api.POST("/learning-path/progress", handlers.UpdateUserProgress(db))
+		api.GET("/learning-path/progress/:user_id", handlers.GetUserProgress(db))
 	}
 
 	return router
