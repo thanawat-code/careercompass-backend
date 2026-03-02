@@ -28,6 +28,7 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 
 	// Health check endpoint
 	router.GET("/health", handlers.HealthCheck(db))
+	careerHandler := handlers.NewCareerHandler(db)
 
 	// API routes
 	api := router.Group("/api")
@@ -35,6 +36,7 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 		// User routes
 		api.GET("/users", handlers.GetUsers(db))
 		api.POST("/users", handlers.CreateUser(db))
+		api.POST("/career-recommend", careerHandler.RecommendCareer)
 	}
 
 	return router
