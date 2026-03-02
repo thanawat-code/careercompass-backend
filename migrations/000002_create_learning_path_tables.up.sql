@@ -71,41 +71,41 @@ INSERT INTO stages (id, learning_path_id, stage_number, title, subtitle, positio
 
 -- Seed Courses for Stage 1 (Foundation)
 INSERT INTO courses (stage_id, title, subtitle, url, sort_order) VALUES
-('s1000001-0000-0000-0000-000000000001', 'Introduction to Programming', 'เรียนรู้พื้นฐานการเขียนโปรแกรม', 'https://www.coursera.org/learn/python', 1),
-('s1000001-0000-0000-0000-000000000001', 'Mathematics Basics (Algebra, Calculus)', 'เรียนรู้พื้นฐานคณิตศาสตร์', 'https://www.khanacademy.org/math', 2),
-('s1000001-0000-0000-0000-000000000001', 'Statistics Fundamentals', 'เรียนรู้พื้นฐานสถิติ', 'https://www.coursera.org/learn/statistics', 3),
-('s1000001-0000-0000-0000-000000000001', 'Basic English for the Workplace', 'เรียนรู้พื้นฐานภาษาอังกฤษ', NULL, 4),
-('s1000001-0000-0000-0000-000000000001', 'Math for Machine Learning - Basics', 'เรียนรู้พื้นฐานคณิตสำหรับ ML', NULL, 5),
-('s1000001-0000-0000-0000-000000000001', 'Excel for Data', 'เรียนรู้การใช้ Excel สำหรับ Data', NULL, 6),
-('s1000001-0000-0000-0000-000000000001', 'Introduction to Cybersecurity Foundations', 'เรียนรู้พื้นฐาน Cybersecurity', NULL, 7),
-('s1000001-0000-0000-0000-000000000001', 'Introduction to Database and SQL', 'เรียนรู้พื้นฐาน Database and SQL', NULL, 8),
-('s1000001-0000-0000-0000-000000000001', 'Introduction to Data Analysis', 'เรียนรู้พื้นฐาน Data Analysis', NULL, 9);
+('a0000001-0000-0000-0000-000000000001', 'Introduction to Programming', 'เรียนรู้พื้นฐานการเขียนโปรแกรม', 'https://www.coursera.org/learn/python', 1),
+('a0000001-0000-0000-0000-000000000001', 'Mathematics Basics (Algebra, Calculus)', 'เรียนรู้พื้นฐานคณิตศาสตร์', 'https://www.khanacademy.org/math', 2),
+('a0000001-0000-0000-0000-000000000001', 'Statistics Fundamentals', 'เรียนรู้พื้นฐานสถิติ', 'https://www.coursera.org/learn/statistics', 3),
+('a0000001-0000-0000-0000-000000000001', 'Basic English for the Workplace', 'เรียนรู้พื้นฐานภาษาอังกฤษ', NULL, 4),
+('a0000001-0000-0000-0000-000000000001', 'Math for Machine Learning - Basics', 'เรียนรู้พื้นฐานคณิตสำหรับ ML', NULL, 5),
+('a0000001-0000-0000-0000-000000000001', 'Excel for Data', 'เรียนรู้การใช้ Excel สำหรับ Data', NULL, 6),
+('a0000001-0000-0000-0000-000000000001', 'Introduction to Cybersecurity Foundations', 'เรียนรู้พื้นฐาน Cybersecurity', NULL, 7),
+('a0000001-0000-0000-0000-000000000001', 'Introduction to Database and SQL', 'เรียนรู้พื้นฐาน Database and SQL', NULL, 8),
+('a0000001-0000-0000-0000-000000000001', 'Introduction to Data Analysis', 'เรียนรู้พื้นฐาน Data Analysis', NULL, 9);
 
 -- Seed Courses for Stage 2 (Core Knowledge)
 INSERT INTO courses (stage_id, title, subtitle, url, sort_order) VALUES
-('s1000001-0000-0000-0000-000000000002', 'Python for Data Science', 'เรียนรู้ Python สำหรับ Data Science', NULL, 1),
-('s1000001-0000-0000-0000-000000000002', 'Data Wrangling with Pandas', 'จัดการข้อมูลด้วย Pandas', NULL, 2),
-('s1000001-0000-0000-0000-000000000002', 'Data Visualization with Matplotlib', 'สร้างกราฟและ Visualization', NULL, 3),
-('s1000001-0000-0000-0000-000000000002', 'SQL for Data Analysis', 'ใช้ SQL วิเคราะห์ข้อมูล', NULL, 4);
+('a0000001-0000-0000-0000-000000000002', 'Python for Data Science', 'เรียนรู้ Python สำหรับ Data Science', NULL, 1),
+('a0000001-0000-0000-0000-000000000002', 'Data Wrangling with Pandas', 'จัดการข้อมูลด้วย Pandas', NULL, 2),
+('a0000001-0000-0000-0000-000000000002', 'Data Visualization with Matplotlib', 'สร้างกราฟและ Visualization', NULL, 3),
+('a0000001-0000-0000-0000-000000000002', 'SQL for Data Analysis', 'ใช้ SQL วิเคราะห์ข้อมูล', NULL, 4);
 
 -- Seed Courses for Stage 3 (Essential Skills)
 INSERT INTO courses (stage_id, title, subtitle, url, sort_order) VALUES
-('s1000001-0000-0000-0000-000000000003', 'Machine Learning Fundamentals', 'พื้นฐาน Machine Learning', NULL, 1),
-('s1000001-0000-0000-0000-000000000003', 'Scikit-Learn for ML', 'ใช้งาน Scikit-Learn', NULL, 2),
-('s1000001-0000-0000-0000-000000000003', 'Feature Engineering', 'การทำ Feature Engineering', NULL, 3);
+('a0000001-0000-0000-0000-000000000003', 'Machine Learning Fundamentals', 'พื้นฐาน Machine Learning', NULL, 1),
+('a0000001-0000-0000-0000-000000000003', 'Scikit-Learn for ML', 'ใช้งาน Scikit-Learn', NULL, 2),
+('a0000001-0000-0000-0000-000000000003', 'Feature Engineering', 'การทำ Feature Engineering', NULL, 3);
 
 -- Seed Courses for Stage 4 (Specialized)
 INSERT INTO courses (stage_id, title, subtitle, url, sort_order) VALUES
-('s1000001-0000-0000-0000-000000000004', 'Deep Learning with TensorFlow', 'เรียนรู้ Deep Learning', NULL, 1),
-('s1000001-0000-0000-0000-000000000004', 'Natural Language Processing', 'การประมวลผลภาษาธรรมชาติ', NULL, 2),
-('s1000001-0000-0000-0000-000000000004', 'Computer Vision Basics', 'พื้นฐาน Computer Vision', NULL, 3);
+('a0000001-0000-0000-0000-000000000004', 'Deep Learning with TensorFlow', 'เรียนรู้ Deep Learning', NULL, 1),
+('a0000001-0000-0000-0000-000000000004', 'Natural Language Processing', 'การประมวลผลภาษาธรรมชาติ', NULL, 2),
+('a0000001-0000-0000-0000-000000000004', 'Computer Vision Basics', 'พื้นฐาน Computer Vision', NULL, 3);
 
 -- Seed Courses for Stage 5 (Portfolio)
 INSERT INTO courses (stage_id, title, subtitle, url, sort_order) VALUES
-('s1000001-0000-0000-0000-000000000005', 'Building Data Science Portfolio', 'สร้าง Portfolio สำหรับ Data Scientist', NULL, 1),
-('s1000001-0000-0000-0000-000000000005', 'Kaggle Competitions', 'เข้าร่วม Kaggle Competition', NULL, 2);
+('a0000001-0000-0000-0000-000000000005', 'Building Data Science Portfolio', 'สร้าง Portfolio สำหรับ Data Scientist', NULL, 1),
+('a0000001-0000-0000-0000-000000000005', 'Kaggle Competitions', 'เข้าร่วม Kaggle Competition', NULL, 2);
 
 -- Seed Courses for Stage 6 (Career Launch)
 INSERT INTO courses (stage_id, title, subtitle, url, sort_order) VALUES
-('s1000001-0000-0000-0000-000000000006', 'Job Interview Preparation', 'เตรียมตัวสัมภาษณ์งาน', NULL, 1),
-('s1000001-0000-0000-0000-000000000006', 'Resume & LinkedIn Optimization', 'ปรับปรุง Resume และ LinkedIn', NULL, 2);
+('a0000001-0000-0000-0000-000000000006', 'Job Interview Preparation', 'เตรียมตัวสัมภาษณ์งาน', NULL, 1),
+('a0000001-0000-0000-0000-000000000006', 'Resume & LinkedIn Optimization', 'ปรับปรุง Resume และ LinkedIn', NULL, 2);
