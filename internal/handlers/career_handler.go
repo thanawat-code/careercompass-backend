@@ -93,24 +93,28 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 		Example: {"career_ids": [1, 5, 8]}
 	`, user.MBTI, user.Aptitude, user.Knowledge, strings.Join(careerListStr, "\n"))
 
-	// 🟢 รายชื่อโมเดลที่อัปเดตตามลิสต์ของคุณ (Gemini 2.5 / 2.0 / Latest)
-	candidateModels := []string{
-		"gemini-2.5-flash",          // ใหม่ล่าสุด
-		"gemini-flash-latest",       // ตัวล่าสุด (Alias)
-		"gemini-2.0-flash-lite-001", // ตัวเล็ก ประหยัดโควต้า
-		"gemini-2.0-flash",          // ตัวมาตรฐาน
-		"gemini-2.5-pro",            // ตัวเก่งสุด
-		"gemini-pro-latest",         // ตัวเก่งล่าสุด (Alias)
+	// ✅ model แต่ละตัวใช้ endpoint version ที่ต่างกัน!
+	// - Gemini 2.0 → /v1beta/
+	// - Gemini 1.5 → /v1/
+	type modelEntry struct {
+		name    string
+		version string
+	}
+	candidateModels := []modelEntry{
+		{"gemini-2.0-flash", "v1beta"},      // ✅ ฟรี, เสถียร - หลัก
+		{"gemini-2.0-flash-lite", "v1beta"}, // ✅ ฟรี, เร็วกว่า
+		{"gemini-1.5-flash", "v1"},          // ✅ ฟรี, stable (ต้องใช้ v1)
+		{"gemini-1.5-flash-8b", "v1"},       // ✅ ฟรี, เล็กมาก (ต้องใช้ v1)
+		{"gemini-1.5-pro", "v1"},            // ✅ ฟรี (จำกัด) (ต้องใช้ v1)
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Loop ลองทีละโมเดล
-	for _, modelName := range candidateModels {
-		log.Printf("🔄 Trying model: %s ...", modelName)
+	for _, m := range candidateModels {
+		log.Printf("🔄 Trying model: %s (endpoint: %s) ...", m.name, m.version)
 
-		// ใช้ Endpoint v1beta เพราะรุ่น 2.5/2.0 มักจะอยู่ใน Beta
-		url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", modelName, apiKey)
+		apiURL := fmt.Sprintf("https://generativelanguage.googleapis.com/%s/models/%s:generateContent?key=%s", m.version, m.name, apiKey)
 
 		requestBody, _ := json.Marshal(map[string]interface{}{
 			"contents": []interface{}{
@@ -125,21 +129,24 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 			},
 		})
 
-		req, _ := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+		req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
+		if err != nil {
+			continue
+		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Printf("❌ Connection error with %s: %v", modelName, err)
+			log.Printf("❌ Connection error with %s: %v", m.name, err)
 			continue
 		}
-		defer resp.Body.Close()
 
 		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close() // ✅ close ทันที ไม่ใช้ defer ใน loop
 
 		if resp.StatusCode == 200 {
 			// ✅ เจอตัวที่ใช่แล้ว!
-			log.Printf("✅ Success with model: %s", modelName)
+			log.Printf("✅ Success with model: %s", m.name)
 
 			// แกะผลลัพธ์
 			type GeminiResponse struct {
@@ -156,8 +163,11 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 				if len(geminiResp.Candidates) > 0 && len(geminiResp.Candidates[0].Content.Parts) > 0 {
 					jsonText := geminiResp.Candidates[0].Content.Parts[0].Text
 
-					// Clean & Parse JSON
+					// Clean & Parse JSON (รองรับ markdown code block)
 					jsonText = strings.TrimSpace(jsonText)
+					jsonText = strings.TrimPrefix(jsonText, "```json")
+					jsonText = strings.TrimPrefix(jsonText, "```")
+					jsonText = strings.TrimSuffix(jsonText, "```")
 					if start := strings.Index(jsonText, "{"); start != -1 {
 						jsonText = jsonText[start:]
 					}
@@ -176,9 +186,14 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 				}
 			}
 			break
+
+		} else if resp.StatusCode == 429 {
+			// ⏳ Rate limited — รอ 3 วินาที แล้วลอง model ถัดไป
+			log.Printf("⏳ Model %s is rate limited (429), waiting 3s before next model...", m.name)
+			time.Sleep(3 * time.Second)
+
 		} else {
-			// ถ้า Error 429 (Quota) หรือ 404 ให้ลองตัวถัดไป
-			log.Printf("⚠️ Model %s failed with status: %d", modelName, resp.StatusCode)
+			log.Printf("⚠️ Model %s failed with status: %d", m.name, resp.StatusCode)
 		}
 	}
 

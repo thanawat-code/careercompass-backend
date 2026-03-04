@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -47,6 +48,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "email already registered"})
 		return
 	} else if err != pgx.ErrNoRows {
+		log.Printf("❌ Register - DB check error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check existing user"})
 		return
 	}
@@ -73,6 +75,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	          VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	_, err = h.db.Pool.Exec(ctx, query, user.ID, user.Email, user.PasswordHash, user.DisplayName, user.Gender, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
+		log.Printf("❌ Register - DB insert error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}
