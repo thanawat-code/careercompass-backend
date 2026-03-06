@@ -90,6 +90,10 @@ func GetLearningPath(db *database.DB) gin.HandlerFunc {
 					}
 				}
 			}
+			// Ensure stage 1 is never locked for any logged-in user
+			if len(stages) > 0 && stages[0].Status == "locked" {
+				stages[0].Status = "in-progress"
+			}
 		} else {
 			// No user => first stage is in-progress by default
 			if len(stages) > 0 {
@@ -220,6 +224,90 @@ func UpdateUserProgress(db *database.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, progress)
+	}
+}
+
+// CompleteStageAndUnlockNext marks a stage as completed and unlocks the next stage
+// POST /api/learning-path/complete-stage
+func CompleteStageAndUnlockNext(db *database.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			UserID    string `json:"user_id" binding:"required"`
+			StageID   string `json:"stage_id" binding:"required"`
+			CareerName string `json:"career_name" binding:"required"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		userID, err := uuid.Parse(req.UserID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
+			return
+		}
+
+		stageID, err := uuid.Parse(req.StageID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid stage_id"})
+			return
+		}
+
+		ctx := context.Background()
+
+		// 1. Mark current stage as completed
+		upsertQuery := `
+			INSERT INTO user_stage_progress (id, user_id, stage_id, status, started_at, completed_at)
+			VALUES (gen_random_uuid(), $1, $2, 'completed',
+				NOW(),
+				NOW()
+			)
+			ON CONFLICT (user_id, stage_id) DO UPDATE
+			SET status = 'completed',
+			    completed_at = NOW(),
+			    updated_at = NOW()`
+
+		_, err = db.Pool.Exec(ctx, upsertQuery, userID, stageID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete stage"})
+			return
+		}
+
+		// 2. Find the next stage (stage_number + 1) in the same learning path
+		var nextStageID uuid.UUID
+		err = db.Pool.QueryRow(ctx,
+			`SELECT s.id FROM stages s
+			 JOIN learning_paths lp ON s.learning_path_id = lp.id
+			 WHERE lp.career_name = $1
+			   AND s.stage_number = (
+			       SELECT stage_number + 1 FROM stages WHERE id = $2
+			   )
+			 LIMIT 1`,
+			req.CareerName, stageID,
+		).Scan(&nextStageID)
+
+		if err != nil {
+			// No next stage (last stage) — that's OK
+			c.JSON(http.StatusOK, gin.H{"message": "Stage completed. This was the last stage!"})
+			return
+		}
+
+		// 3. Unlock the next stage (set to in-progress) if not already started
+		unlockQuery := `
+			INSERT INTO user_stage_progress (id, user_id, stage_id, status, started_at, completed_at)
+			VALUES (gen_random_uuid(), $1, $2, 'in-progress', NOW(), NULL)
+			ON CONFLICT (user_id, stage_id) DO NOTHING`
+
+		_, err = db.Pool.Exec(ctx, unlockQuery, userID, nextStageID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unlock next stage"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":       "Stage completed and next stage unlocked",
+			"next_stage_id": nextStageID,
+		})
 	}
 }
 

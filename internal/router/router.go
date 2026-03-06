@@ -59,6 +59,7 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 		api.GET("/learning-paths", handlers.GetAllLearningPaths(db))
 		api.GET("/learning-path/:career_name", handlers.GetLearningPath(db))
 		api.POST("/learning-path/progress", handlers.UpdateUserProgress(db))
+		api.POST("/learning-path/complete-stage", handlers.CompleteStageAndUnlockNext(db))
 		api.GET("/learning-path/progress/:user_id", handlers.GetUserProgress(db))
 	}
 
