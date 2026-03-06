@@ -1,0 +1,34 @@
+# Environment files (contains passwords)
+.env
+.env.local
+.env.production
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/careercompass-backend.exe
+
+# Test binary
+*.test
+
+# Output of go coverage tool
+*.out
+
+# Dependency directory
+vendor/
+
+# Go workspace file
+go.work
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

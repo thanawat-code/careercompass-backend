@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	CORS     CORSConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -30,6 +31,11 @@ type DatabaseConfig struct {
 
 type CORSConfig struct {
 	AllowedOrigins []string
+}
+
+type JWTConfig struct {
+	Secret     string
+	Expiration string
 }
 
 func Load() (*Config, error) {
@@ -51,6 +57,10 @@ func Load() (*Config, error) {
 		},
 		CORS: CORSConfig{
 			AllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000"), ","),
+		},
+		JWT: JWTConfig{
+			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-this-in-production"),
+			Expiration: getEnv("JWT_EXPIRATION", "24h"),
 		},
 	}
 
