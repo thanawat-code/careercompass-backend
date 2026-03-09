@@ -61,6 +61,9 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 		api.POST("/learning-path/progress", handlers.UpdateUserProgress(db))
 		api.POST("/learning-path/complete-stage", handlers.CompleteStageAndUnlockNext(db))
 		api.GET("/learning-path/progress/:user_id", handlers.GetUserProgress(db))
+
+		// Quiz routes
+		api.POST("/quiz/generate", handlers.GenerateQuiz)
 	}
 
 	return router
