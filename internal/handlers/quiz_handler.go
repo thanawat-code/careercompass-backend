@@ -181,145 +181,126 @@ func callGeminiForQuiz(careerName, stageName, careerSlug string) ([]QuizQuestion
   ]
 }`, careerName, stageName, stageName, careerName)
 
-	type modelEntry struct {
-		name       string
-		version    string
-		maxRetries int
-	}
-
-	// gemini-2.0 uses v1beta, gemini-1.5 uses v1
-	models := []modelEntry{
-		{"gemini-2.0-flash", "v1beta", 3},
-		{"gemini-2.0-flash-lite", "v1beta", 2},
-		{"gemini-1.5-flash", "v1", 2},
-		{"gemini-1.5-flash-8b", "v1", 2},
-		{"gemini-1.5-pro", "v1", 1},
+	// 🟢 รายชื่อโมเดลเดียวกับ career_handler.go (Smart Retry - Gemini 2.5 / 2.0 / Latest)
+	candidateModels := []string{
+		"gemini-2.5-flash",          // ใหม่ล่าสุด
+		"gemini-flash-latest",       // ตัวล่าสุด (Alias)
+		"gemini-2.0-flash-lite-001", // ตัวเล็ก ประหยัดโควต้า
+		"gemini-2.0-flash",          // ตัวมาตรฐาน
+		"gemini-2.5-pro",            // ตัวเก่งสุด
+		"gemini-pro-latest",         // ตัวเก่งล่าสุด (Alias)
 	}
 
 	client := &http.Client{Timeout: 45 * time.Second}
 
-	for _, m := range models {
-		for attempt := 1; attempt <= m.maxRetries; attempt++ {
-			log.Printf("🔄 [Quiz] Trying model: %s (attempt %d/%d) ...", m.name, attempt, m.maxRetries)
+	for _, modelName := range candidateModels {
+		log.Printf("🔄 [Quiz] Trying model: %s ...", modelName)
 
-			apiURL := fmt.Sprintf(
-				"https://generativelanguage.googleapis.com/%s/models/%s:generateContent?key=%s",
-				m.version, m.name, apiKey,
-			)
+		// ใช้ v1beta เหมือน career_handler.go
+		apiURL := fmt.Sprintf(
+			"https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
+			modelName, apiKey,
+		)
 
-			// response_mime_type is only supported in v1beta
-			genConfig := map[string]interface{}{
-				"temperature": 0.7,
-			}
-			if m.version == "v1beta" {
-				genConfig["response_mime_type"] = "application/json"
-			}
-
-			requestBody, _ := json.Marshal(map[string]interface{}{
-				"contents": []interface{}{
-					map[string]interface{}{
-						"parts": []interface{}{
-							map[string]string{"text": promptText},
-						},
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"contents": []interface{}{
+				map[string]interface{}{
+					"parts": []interface{}{
+						map[string]string{"text": promptText},
 					},
 				},
-				"generationConfig": genConfig,
-			})
+			},
+			"generationConfig": map[string]interface{}{
+				"response_mime_type": "application/json",
+				"temperature":        0.7,
+			},
+		})
 
-			httpReq, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
-			if err != nil {
-				log.Printf("❌ [Quiz] Failed to create request: %v", err)
-				break
-			}
-			httpReq.Header.Set("Content-Type", "application/json")
+		httpReq, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
+		if err != nil {
+			log.Printf("❌ [Quiz] Failed to create request: %v", err)
+			continue
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
 
-			resp, err := client.Do(httpReq)
-			if err != nil {
-				log.Printf("❌ [Quiz] Connection error with %s: %v", m.name, err)
-				break
-			}
-
-			body, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-
-			// Rate limited — wait with backoff and retry same model
-			if resp.StatusCode == 429 {
-				waitSec := time.Duration(attempt*5) * time.Second
-				log.Printf("⏳ [Quiz] Model %s rate limited (attempt %d), waiting %v before retry...", m.name, attempt, waitSec)
-				time.Sleep(waitSec)
-				continue
-			}
-
-			// Non-200 (not rate limit) → skip to next model
-			if resp.StatusCode != 200 {
-				bodySnap := body
-				if len(bodySnap) > 300 {
-					bodySnap = bodySnap[:300]
-				}
-				log.Printf("⚠️ [Quiz] Model %s failed with status: %d — %s", m.name, resp.StatusCode, string(bodySnap))
-				break
-			}
-
-			// Parse Gemini response envelope
-			type GeminiResp struct {
-				Candidates []struct {
-					Content struct {
-						Parts []struct {
-							Text string `json:"text"`
-						} `json:"parts"`
-					} `json:"content"`
-				} `json:"candidates"`
-			}
-			var geminiResp GeminiResp
-			if err := json.Unmarshal(body, &geminiResp); err != nil {
-				log.Printf("⚠️ [Quiz] Failed to parse Gemini response: %v", err)
-				break
-			}
-
-			if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
-				log.Printf("⚠️ [Quiz] Empty candidates from model %s", m.name)
-				break
-			}
-
-			// Extract and clean JSON text
-			jsonText := geminiResp.Candidates[0].Content.Parts[0].Text
-			jsonText = strings.TrimSpace(jsonText)
-			jsonText = strings.TrimPrefix(jsonText, "```json")
-			jsonText = strings.TrimPrefix(jsonText, "```")
-			jsonText = strings.TrimSuffix(jsonText, "```")
-			jsonText = strings.TrimSpace(jsonText)
-
-			if start := strings.Index(jsonText, "{"); start != -1 {
-				jsonText = jsonText[start:]
-			}
-			if end := strings.LastIndex(jsonText, "}"); end != -1 {
-				jsonText = jsonText[:end+1]
-			}
-
-			type QuizResponse struct {
-				Questions []QuizQuestion `json:"questions"`
-			}
-			var quizResp QuizResponse
-			if err := json.Unmarshal([]byte(jsonText), &quizResp); err != nil {
-				log.Printf("⚠️ [Quiz] Failed to parse quiz JSON: %v\nRaw snippet: %.200s", err, jsonText)
-				break
-			}
-
-			if len(quizResp.Questions) < 5 {
-				log.Printf("⚠️ [Quiz] Only %d questions returned, skipping model", len(quizResp.Questions))
-				break
-			}
-
-			// Trim to exactly 10
-			if len(quizResp.Questions) > 10 {
-				quizResp.Questions = quizResp.Questions[:10]
-			}
-
-			log.Printf("✅ [Quiz] Generated %d questions with model %s", len(quizResp.Questions), m.name)
-			return quizResp.Questions, nil
+		resp, err := client.Do(httpReq)
+		if err != nil {
+			log.Printf("❌ [Quiz] Connection error with %s: %v", modelName, err)
+			continue
 		}
 
-		log.Printf("⚠️ [Quiz] Exhausted retries for model %s, moving to next", m.name)
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		// Non-200 → ลองตัวถัดไป (รวม 429 rate limit)
+		if resp.StatusCode != 200 {
+			bodySnap := body
+			if len(bodySnap) > 300 {
+				bodySnap = bodySnap[:300]
+			}
+			log.Printf("⚠️ [Quiz] Model %s failed with status: %d — %s", modelName, resp.StatusCode, string(bodySnap))
+			continue
+		}
+
+		log.Printf("✅ [Quiz] Success with model: %s", modelName)
+
+		// Parse Gemini response envelope
+		type GeminiResp struct {
+			Candidates []struct {
+				Content struct {
+					Parts []struct {
+						Text string `json:"text"`
+					} `json:"parts"`
+				} `json:"content"`
+			} `json:"candidates"`
+		}
+		var geminiResp GeminiResp
+		if err := json.Unmarshal(body, &geminiResp); err != nil {
+			log.Printf("⚠️ [Quiz] Failed to parse Gemini response: %v", err)
+			continue
+		}
+
+		if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
+			log.Printf("⚠️ [Quiz] Empty candidates from model %s", modelName)
+			continue
+		}
+
+		// Extract and clean JSON text
+		jsonText := geminiResp.Candidates[0].Content.Parts[0].Text
+		jsonText = strings.TrimSpace(jsonText)
+		jsonText = strings.TrimPrefix(jsonText, "```json")
+		jsonText = strings.TrimPrefix(jsonText, "```")
+		jsonText = strings.TrimSuffix(jsonText, "```")
+		jsonText = strings.TrimSpace(jsonText)
+
+		if start := strings.Index(jsonText, "{"); start != -1 {
+			jsonText = jsonText[start:]
+		}
+		if end := strings.LastIndex(jsonText, "}"); end != -1 {
+			jsonText = jsonText[:end+1]
+		}
+
+		type QuizResponse struct {
+			Questions []QuizQuestion `json:"questions"`
+		}
+		var quizResp QuizResponse
+		if err := json.Unmarshal([]byte(jsonText), &quizResp); err != nil {
+			log.Printf("⚠️ [Quiz] Failed to parse quiz JSON: %v\nRaw snippet: %.200s", err, jsonText)
+			continue
+		}
+
+		if len(quizResp.Questions) < 5 {
+			log.Printf("⚠️ [Quiz] Only %d questions returned, skipping model", len(quizResp.Questions))
+			continue
+		}
+
+		// Trim to exactly 10
+		if len(quizResp.Questions) > 10 {
+			quizResp.Questions = quizResp.Questions[:10]
+		}
+
+		log.Printf("✅ [Quiz] Generated %d questions with model %s", len(quizResp.Questions), modelName)
+		return quizResp.Questions, nil
 	}
 
 	return nil, fmt.Errorf("all models failed to generate quiz")
