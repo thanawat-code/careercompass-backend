@@ -69,7 +69,7 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
 		log.Println("⚠️ Warning: GEMINI_API_KEY not found")
-		return []int{1, 2, 3}
+		return []int{1, 2, 3, 4, 5}
 	}
 
 	// เตรียมข้อมูลอาชีพ
@@ -88,9 +88,9 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 		Available Careers Database:
 		%s
 
-		Task: Analyze the user profile and select the top 3 most suitable career IDs.
+		Task: Analyze the user profile and select the top 5 most suitable career IDs.
 		Response Format: return ONLY a JSON object with a single key "career_ids" containing an array of integers.
-		Example: {"career_ids": [1, 5, 8]}
+		Example: {"career_ids": [1, 5, 8, 3, 7]}
 	`, user.MBTI, user.Aptitude, user.Knowledge, strings.Join(careerListStr, "\n"))
 
 	// 🟢 รายชื่อโมเดลที่อัปเดตตามลิสต์ของคุณ (Gemini 2.5 / 2.0 / Latest)
@@ -183,7 +183,7 @@ func (h *CareerHandler) callGeminiAI_SmartRetry(user models.UserPayload, careers
 	}
 
 	log.Println("❌ All models failed. Using fallback.")
-	return []int{1, 2, 3} // Fallback
+	return []int{1, 2, 3, 4, 5} // Fallback
 }
 
 // --- Helper Functions (Database) ---
