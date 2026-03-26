@@ -25,16 +25,17 @@ type QuizQuestion struct {
 // POST /api/quiz/generate
 func GenerateQuiz(c *gin.Context) {
 	var req struct {
-		CareerName string `json:"career_name"`
-		StageName  string `json:"stage_name"`
-		CareerSlug string `json:"career_slug"`
+		CareerName   string   `json:"career_name"`
+		StageName    string   `json:"stage_name"`
+		CareerSlug   string   `json:"career_slug"`
+		CourseTitles []string `json:"course_titles"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	questions, err := callGeminiForQuiz(req.CareerName, req.StageName, req.CareerSlug)
+	questions, err := callGeminiForQuiz(req.CareerName, req.StageName, req.CareerSlug, req.CourseTitles)
 	if err != nil {
 		log.Printf("❌ Gemini failed, using fallback questions: %v", err)
 		questions = getFallbackQuestions(req.CareerName, req.StageName, req.CareerSlug)
@@ -153,20 +154,28 @@ var generalQuestions = []QuizQuestion{
 	{"UX Design คืออะไร?", []string{"การออกแบบประสบการณ์ผู้ใช้", "การเขียนโค้ด", "การจัดการ Database", "การ Deploy"}, "การออกแบบประสบการณ์ผู้ใช้"},
 }
 
-func callGeminiForQuiz(careerName, stageName, careerSlug string) ([]QuizQuestion, error) {
+func callGeminiForQuiz(careerName, stageName, careerSlug string, courseTitles []string) ([]QuizQuestion, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY not set")
+	}
+
+	coursesStr := "(ไม่มีข้อมูลคอร์สเรียนในส่วนนี้)"
+	if len(courseTitles) > 0 {
+		coursesStr = "- " + strings.Join(courseTitles, "\n- ")
 	}
 
 	promptText := fmt.Sprintf(`คุณเป็นผู้เชี่ยวชาญด้าน %s โดยเฉพาะในเรื่อง "%s"
 
 สร้างข้อสอบแบบปรนัย 10 ข้อ เกี่ยวกับหัวข้อ "%s" สำหรับสายงาน "%s"
 
+โดยให้อ้างอิงเนื้อหาจากหลักสูตรหรือวิชาเรียนในด่านนี้ ดังต่อไปนี้ (เพื่อใช้เป็นแนวทางในการตั้งคำถามให้ตรงกับสิ่งที่ผู้เรียนได้ศึกษา):
+%s
+
 กฎสำคัญ:
 1. แต่ละข้อต้องมี 4 ตัวเลือก (options)
 2. ต้องมีคำตอบถูกเพียง 1 ข้อ และต้องตรงกับหนึ่งใน options พอดี
-3. คำถามต้องหลากหลาย ครอบคลุมทั้งทฤษฎีและปฏิบัติ
+3. คำถามต้องหลากหลาย ครอบคลุมทั้งทฤษฎีและปฏิบัติที่เกี่ยวข้องกับวิชาเรียนข้างต้น
 4. ภาษาไทยเป็นหลัก แต่คำศัพท์เทคนิคภาษาอังกฤษใช้ได้
 5. ความยากง่ายต้องระดับเริ่มต้นถึงกลาง
 
@@ -179,7 +188,7 @@ func callGeminiForQuiz(careerName, stageName, careerSlug string) ([]QuizQuestion
       "answer": "ตัวเลือก A"
     }
   ]
-}`, careerName, stageName, stageName, careerName)
+}`, careerName, stageName, stageName, careerName, coursesStr)
 
 	// 🟢 รายชื่อโมเดลเดียวกับ career_handler.go (Smart Retry - Gemini 2.5 / 2.0 / Latest)
 	candidateModels := []string{
