@@ -355,3 +355,44 @@ func GetUserProgress(db *database.DB) gin.HandlerFunc {
 		c.JSON(http.StatusOK, progresses)
 	}
 }
+
+// ResetLearningPath deletes all user progress for a specific career path
+// DELETE /api/learning-path/:career_name/reset
+func ResetLearningPath(db *database.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		careerName := c.Param("career_name")
+		userIDStr := c.Query("user_id")
+
+		if userIDStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
+			return
+		}
+
+		ctx := context.Background()
+
+		// Delete from user_stage_progress for stages belonging to the specified career
+		query := `
+			DELETE FROM user_stage_progress 
+			WHERE user_id = $1 
+			AND stage_id IN (
+				SELECT s.id 
+				FROM stages s
+				JOIN learning_paths lp ON s.learning_path_id = lp.id
+				WHERE lp.career_name = $2
+			)`
+
+		_, err = db.Pool.Exec(ctx, query, userID, careerName)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reset learning path progress"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Learning path progress reset successfully"})
+	}
+}
