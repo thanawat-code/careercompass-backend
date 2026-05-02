@@ -10,7 +10,16 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255),
   ADD COLUMN IF NOT EXISTS gender gender_enum;
 
--- Copy existing name -> display_name for backward compatibility
-UPDATE users SET display_name = name WHERE display_name IS NULL;
+-- Copy legacy name -> display_name only when a legacy name column exists.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'name'
+  ) THEN
+    EXECUTE 'UPDATE users SET display_name = name WHERE display_name IS NULL';
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
