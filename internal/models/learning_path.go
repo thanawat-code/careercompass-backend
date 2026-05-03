@@ -34,14 +34,19 @@ type Stage struct {
 
 // Course represents a course in a stage
 type Course struct {
-	ID        uuid.UUID `json:"id"`
-	StageID   uuid.UUID `json:"stage_id"`
-	Title     string    `json:"title"`
-	Subtitle  string    `json:"subtitle"`
-	URL       *string   `json:"url"`
-	SortOrder int       `json:"sort_order"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID              uuid.UUID `json:"id"`
+	StageID         uuid.UUID `json:"stage_id"`
+	Title           string    `json:"title"`
+	Subtitle        string    `json:"subtitle"`
+	URL             *string   `json:"url"`
+	SortOrder       int       `json:"sort_order"`
+	Provider        *string   `json:"provider"`
+	PageType        *string   `json:"page_type"`
+	Level           *string   `json:"level"`
+	DirectLinkNote  *string   `json:"direct_link_note"`
+	RelevanceReason *string   `json:"relevance_reason"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 // UserStageProgress represents a user's progress on a stage

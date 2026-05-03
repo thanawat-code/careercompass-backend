@@ -104,7 +104,9 @@ func GetLearningPath(db *database.DB) gin.HandlerFunc {
 		// 4. Get courses for each stage
 		for i := range stages {
 			courseRows, err := db.Pool.Query(ctx,
-				`SELECT id, stage_id, title, subtitle, url, sort_order, created_at, updated_at
+				`SELECT id, stage_id, title, subtitle, url, sort_order,
+				        provider, page_type, level, direct_link_note, relevance_reason,
+				        created_at, updated_at
 				 FROM courses WHERE stage_id = $1 ORDER BY sort_order ASC`,
 				stages[i].ID,
 			)
@@ -117,7 +119,9 @@ func GetLearningPath(db *database.DB) gin.HandlerFunc {
 				var course models.Course
 				if err := courseRows.Scan(
 					&course.ID, &course.StageID, &course.Title, &course.Subtitle,
-					&course.URL, &course.SortOrder, &course.CreatedAt, &course.UpdatedAt,
+					&course.URL, &course.SortOrder,
+					&course.Provider, &course.PageType, &course.Level, &course.DirectLinkNote, &course.RelevanceReason,
+					&course.CreatedAt, &course.UpdatedAt,
 				); err == nil {
 					stages[i].Courses = append(stages[i].Courses, course)
 				}

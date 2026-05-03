@@ -17,6 +17,8 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 	gin.SetMode(cfg.Server.GinMode)
 
 	router := gin.Default()
+	router.UseRawPath = true
+	router.UnescapePathValues = true
 
 	// CORS middleware
 	router.Use(cors.New(cors.Config{
