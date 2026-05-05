@@ -41,8 +41,7 @@ COPY --from=builder /app/careercompass .
 COPY --from=builder /app/migrations ./migrations
 
 # The app reads all config from environment variables (no .env file in prod)
-# Expose the port the server listens on
-EXPOSE 4546
+# Expose is not needed for Railway as it uses the $PORT variable dynamically
 
 # Run as non-root for security (principle of least privilege)
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
