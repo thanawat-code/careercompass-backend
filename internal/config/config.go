@@ -21,6 +21,7 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
+	URL      string
 	Host     string
 	Port     string
 	User     string
@@ -48,6 +49,7 @@ func Load() (*Config, error) {
 			GinMode: getEnv("GIN_MODE", "debug"),
 		},
 		Database: DatabaseConfig{
+			URL:      os.Getenv("DATABASE_URL"),
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "5432"),
 			User:     getEnv("DB_USER", "appuser"),
@@ -68,6 +70,12 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) GetDatabaseURL() string {
+	// If DATABASE_URL is provided (Standard for Railway/Production), use it directly
+	if c.Database.URL != "" {
+		return c.Database.URL
+	}
+
+	// Fallback to building from components (Local Dev)
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		c.Database.User,
