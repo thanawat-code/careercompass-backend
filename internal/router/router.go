@@ -9,6 +9,7 @@ import (
 	"github.com/thanawat-code/careercompass-backend/internal/config"
 	"github.com/thanawat-code/careercompass-backend/internal/database"
 	"github.com/thanawat-code/careercompass-backend/internal/handlers"
+	"github.com/thanawat-code/careercompass-backend/internal/middleware"
 	"github.com/thanawat-code/careercompass-backend/internal/services"
 )
 
@@ -36,35 +37,42 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db, authService)
-
-	// Health check endpoint
-	router.GET("/health", handlers.HealthCheck(db))
 	careerHandler := handlers.NewCareerHandler(db)
+
+	// Health check endpoint (public)
+	router.GET("/health", handlers.HealthCheck(db))
 
 	// API routes
 	api := router.Group("/api")
 	{
-		// Auth routes
+		// ── Public routes (no auth required) ─────────────────────────────
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 		}
 
-		// User routes
-		api.GET("/users", handlers.GetUsers(db))
-		api.POST("/career-recommend", careerHandler.RecommendCareer)
-
-		// Learning Path routes
+		// Learning path browsing — public so unauthenticated users can explore
 		api.GET("/learning-paths", handlers.GetAllLearningPaths(db))
 		api.GET("/learning-path/:career_name", handlers.GetLearningPath(db))
-		api.POST("/learning-path/progress", handlers.UpdateUserProgress(db))
-		api.POST("/learning-path/complete-stage", handlers.CompleteStageAndUnlockNext(db))
-		api.GET("/learning-path/progress/:user_id", handlers.GetUserProgress(db))
-		api.DELETE("/learning-path/:career_name/reset", handlers.ResetLearningPath(db))
 
-		// Quiz routes
+		// AI endpoints — public (no user data involved)
+		api.POST("/career-recommend", careerHandler.RecommendCareer)
 		api.POST("/quiz/generate", handlers.GenerateQuiz)
+
+		// ── Protected routes (require valid JWT Bearer token) ─────────────
+		protected := api.Group("/")
+		protected.Use(middleware.JWTAuth(authService))
+		{
+			// User list (contains email addresses — restricted)
+			protected.GET("/users", handlers.GetUsers(db))
+
+			// Learning path progress (user-specific data)
+			protected.POST("/learning-path/progress", handlers.UpdateUserProgress(db))
+			protected.POST("/learning-path/complete-stage", handlers.CompleteStageAndUnlockNext(db))
+			protected.GET("/learning-path/progress/:user_id", handlers.GetUserProgress(db))
+			protected.DELETE("/learning-path/:career_name/reset", handlers.ResetLearningPath(db))
+		}
 	}
 
 	return router

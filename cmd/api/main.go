@@ -32,9 +32,9 @@ func main() {
 	}
 	defer db.Close()
 
-	// Run migrations
+	// Run migrations — fatal if this fails; the app must not start with a broken schema
 	if err := runMigrations(cfg.GetDatabaseURL()); err != nil {
-		log.Printf("Warning: Migration failed: %v", err)
+		log.Fatalf("Migration failed, refusing to start: %v", err)
 	}
 
 	// Setup router

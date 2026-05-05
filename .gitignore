@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.production
+!.env.example
 
 # Go build artifacts
 *.exe
@@ -11,8 +12,10 @@
 *.dylib
 /careercompass-backend.exe
 
-# Test binary
+# Test binary and artifacts
 *.test
+test_bin
+*.csv
 
 # Output of go coverage tool
 *.out

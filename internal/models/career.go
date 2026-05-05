@@ -2,7 +2,7 @@ package models
 
 // Struct รับข้อมูลจาก Frontend
 type UserPayload struct {
-	MBTI      string            `json:"mbti"`
+	MBTI      string            `json:"mbti" binding:"required"`
 	Aptitude  map[string]string `json:"aptitude"`
 	Knowledge string            `json:"knowledge"`
 	UserID    int               `json:"user_id"`

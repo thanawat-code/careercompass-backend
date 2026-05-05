@@ -1,0 +1,29 @@
+# Don't copy these into the Docker build context — keeps builds fast and secure
+
+# Git history
+.git
+.gitignore
+
+# Environment files — secrets are passed via env vars at runtime, never baked in
+.env
+.env.*
+
+# Test artifacts
+test_results.csv
+test_results_2.csv
+test_runner.sh
+test_bin
+
+# Local build output
+careercompass
+*.exe
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Docs
+README.md

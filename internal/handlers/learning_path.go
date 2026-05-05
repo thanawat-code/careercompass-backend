@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -199,18 +200,23 @@ func UpdateUserProgress(db *database.DB) gin.HandlerFunc {
 
 		ctx := context.Background()
 
-		// Upsert user stage progress
+		// Upsert user stage progress.
+		// Use a CTE to cast $3 to text exactly once, avoiding pgx/v5 "inconsistent types"
+		// error (SQLSTATE 42P08) that arises when $3 is inferred from both the plain INSERT
+		// column and a $3::text CASE expression in the same query.
 		query := `
-			INSERT INTO user_stage_progress (id, user_id, stage_id, status, started_at, completed_at)
-			VALUES (gen_random_uuid(), $1, $2, $3,
-				CASE WHEN $3 = 'in-progress' THEN NOW() ELSE NULL END,
-				CASE WHEN $3 = 'completed' THEN NOW() ELSE NULL END
-			)
+			WITH v AS (SELECT $3::text AS s)
+			INSERT INTO user_stage_progress (id, user_id, stage_id, status, started_at, completed_at, updated_at)
+			SELECT gen_random_uuid(), $1, $2, v.s,
+				CASE WHEN v.s = 'in-progress' THEN NOW() ELSE NULL END,
+				CASE WHEN v.s = 'completed'   THEN NOW() ELSE NULL END,
+				NOW()
+			FROM v
 			ON CONFLICT (user_id, stage_id) DO UPDATE
-			SET status = EXCLUDED.status,
-			    started_at = CASE WHEN EXCLUDED.status = 'in-progress' AND user_stage_progress.started_at IS NULL THEN NOW() ELSE user_stage_progress.started_at END,
+			SET status       = EXCLUDED.status,
+			    started_at   = CASE WHEN EXCLUDED.status = 'in-progress' AND user_stage_progress.started_at IS NULL THEN NOW() ELSE user_stage_progress.started_at END,
 			    completed_at = CASE WHEN EXCLUDED.status = 'completed' THEN NOW() ELSE NULL END,
-			    updated_at = NOW()
+			    updated_at   = NOW()
 			RETURNING id, user_id, stage_id, status, started_at, completed_at, created_at, updated_at`
 
 		var progress models.UserStageProgress
@@ -219,6 +225,7 @@ func UpdateUserProgress(db *database.DB) gin.HandlerFunc {
 			&progress.StartedAt, &progress.CompletedAt, &progress.CreatedAt, &progress.UpdatedAt,
 		)
 		if err != nil {
+			log.Printf("❌ UpdateUserProgress DB error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update progress"})
 			return
 		}

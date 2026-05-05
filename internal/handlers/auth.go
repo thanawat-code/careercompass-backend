@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Normalize email to lowercase (fixes REG_008: case-insensitive duplicate check)
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 
 	// Validate password match
 	if err := h.authService.ValidatePasswordMatch(req.Password, req.ConfirmPassword); err != nil {
@@ -100,6 +104,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Normalize email to lowercase (fixes LOG_008: case-insensitive login)
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 
 	// Find user by email
 	ctx := context.Background()
