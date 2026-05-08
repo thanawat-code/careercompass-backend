@@ -17,7 +17,11 @@ import (
 	"github.com/thanawat-code/careercompass-backend/internal/database"
 	"github.com/thanawat-code/careercompass-backend/internal/router"
 )
-
+// @title Career Compass API
+// @version 1.0
+// @description Backend API for Career Compass application.
+// @host localhost:4546
+// @BasePath /
 func main() {
 	// Load configuration
 	cfg, err := config.Load()

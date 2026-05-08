@@ -11,6 +11,10 @@ import (
 	"github.com/thanawat-code/careercompass-backend/internal/handlers"
 	"github.com/thanawat-code/careercompass-backend/internal/middleware"
 	"github.com/thanawat-code/careercompass-backend/internal/services"
+
+	docs "github.com/thanawat-code/careercompass-backend/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
@@ -41,6 +45,9 @@ func Setup(cfg *config.Config, db *database.DB) *gin.Engine {
 
 	// Health check endpoint (public)
 	router.GET("/health", handlers.HealthCheck(db))
+
+	// Swagger endpoint (public)
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// API routes
 	api := router.Group("/api")

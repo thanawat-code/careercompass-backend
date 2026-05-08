@@ -1,0 +1,9 @@
+basePath: /
+host: localhost:4546
+info:
+  contact: {}
+  description: Backend API for Career Compass application.
+  title: Career Compass API
+  version: "1.0"
+paths: {}
+swagger: "2.0"
