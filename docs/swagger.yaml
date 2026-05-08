@@ -1,9 +1,159 @@
 basePath: /
+definitions:
+  github_com_thanawat-code_careercompass-backend_internal_models.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.User'
+    type: object
+  github_com_thanawat-code_careercompass-backend_internal_models.Gender:
+    enum:
+    - male
+    - female
+    - other
+    - prefer_not_to_say
+    type: string
+    x-enum-varnames:
+    - GenderMale
+    - GenderFemale
+    - GenderOther
+    - GenderPreferNotToSay
+  github_com_thanawat-code_careercompass-backend_internal_models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_thanawat-code_careercompass-backend_internal_models.RegisterRequest:
+    properties:
+      confirm_password:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      gender:
+        $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.Gender'
+      password:
+        minLength: 8
+        type: string
+    required:
+    - confirm_password
+    - email
+    - password
+    type: object
+  github_com_thanawat-code_careercompass-backend_internal_models.User:
+    properties:
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      gender:
+        $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.Gender'
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
 host: localhost:4546
 info:
   contact: {}
   description: Backend API for Career Compass application.
   title: Career Compass API
   version: "1.0"
-paths: {}
+paths:
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Login
+      tags:
+      - Auth
+  /api/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: Registration Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_thanawat-code_careercompass-backend_internal_models.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Registration
+      tags:
+      - Auth
+  /health:
+    get:
+      description: get the status of server and database connection
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Check API Health
+      tags:
+      - System
 swagger: "2.0"
