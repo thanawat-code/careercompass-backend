@@ -12,7 +12,7 @@ import (
 	"github.com/thanawat-code/careercompass-backend/internal/middleware"
 	"github.com/thanawat-code/careercompass-backend/internal/services"
 
-	docs "github.com/thanawat-code/careercompass-backend/docs"
+	_ "github.com/thanawat-code/careercompass-backend/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
