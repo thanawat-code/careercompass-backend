@@ -3,7 +3,7 @@
 # Uses the full Go toolchain to compile a static binary.
 # This stage is discarded after build; none of its ~800MB ends up in the image.
 # ─────────────────────────────────────────────────────────────────────────────
-FROM golang:1.24-alpine AS builder
+FROM golang:alpine AS builder
 
 # Install git (needed by go mod download for some VCS-based modules)
 RUN apk add --no-cache git
